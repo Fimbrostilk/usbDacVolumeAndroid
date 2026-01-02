@@ -27,12 +27,12 @@ void setVolume(int fileDescriptor, unsigned char *data) {
     libusb_wrap_sys_device(nullptr, (intptr_t) fileDescriptor, &devh);
 
     libusb_detach_kernel_driver(devh, 0);
-    libusb_claim_interface(devh, 0);
-    libusb_release_interface(devh, 0);
+    //libusb_claim_interface(devh, 0);
+    //libusb_release_interface(devh, 0);
 
     //unsigned char mesg2[2] = {0x00,0x00};
-    libusb_control_transfer(devh, 0b00100001, 0x1, 0x0201, 0x0200, data, 2, 500);
-    libusb_control_transfer(devh, 0b00100001, 0x1, 0x0202, 0x0200, data, 2, 500);
+    libusb_control_transfer(devh, 0b00100001, 0x1, 0x0201, 0x0500, data, 2, 500);
+    libusb_control_transfer(devh, 0b00100001, 0x1, 0x0202, 0x0500, data, 2, 500);
 
     libusb_reset_device(devh);
 }
@@ -67,4 +67,5 @@ Java_com_example_libusbAndroidTest_MainActivity_setDeviceVolume(
 
     setVolume(fileDescriptor, as_unsigned_char_array(env, volume));
 }
+
 
