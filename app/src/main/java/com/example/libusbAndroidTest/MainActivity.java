@@ -14,6 +14,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
+import android.hardware.usb.UsbConstants;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -68,26 +69,45 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    protected void connectDevice(UsbDevice device)
-    {
-        UsbInterface intf = device.getInterface(0);
-        UsbEndpoint endpoint = intf.getEndpoint(0);
-        UsbDeviceConnection connection = usbManager.openDevice(device);
-        connection.claimInterface(intf, true);
-        int fileDescriptor = connection.getFileDescriptor();
+    protected void connectDevice(UsbDevice device) {
+        UsbInterface controlInterface = null;
 
-        deviceName = initializeNativeDevice(fileDescriptor);
-        deviceDescriptor = fileDescriptor;
+        // Buscamos la interfaz específica de CONTROL DE AUDIO (Clase 1, Subclase 1)
+        for (int i = 0; i < device.getInterfaceCount(); i++) {
+            UsbInterface iface = device.getInterface(i);
 
-        if(autoApply.isChecked()){
-            setDeviceVolume(fileDescriptor);
+            // USB_CLASS_AUDIO = 1, Subclase 1 = Audio Control
+            // Si la encontramos, esa es la prioritaria
+            if (iface.getInterfaceClass() == UsbConstants.USB_CLASS_AUDIO &&
+                    iface.getInterfaceSubclass() == 1) {
+                controlInterface = iface;
+                break; // Ya la tenemos, dejamos de buscar
+            }
         }
 
+        // Si después de todo no tenemos interfaz
+        if (controlInterface == null) return;
 
-        // Example of a call to a native method
-        tv.setText(deviceName);
-        tv.setBackgroundColor(Color.TRANSPARENT);
 
+        // Abrimos la conexión sobre esa interfaz
+        UsbDeviceConnection connection = usbManager.openDevice(device);
+        if (connection != null) {
+            // Reclamamos la interfaz (true = forzar desconexión del kernel si es necesario)
+            connection.claimInterface(controlInterface, true);
+
+            int fileDescriptor = connection.getFileDescriptor();
+
+            // Pasamos el descriptor al código nativo (C++)
+            deviceName = initializeNativeDevice(fileDescriptor);
+            deviceDescriptor = fileDescriptor;
+
+            if (autoApply.isChecked()) {
+                setDeviceVolume(fileDescriptor);
+            }
+
+            tv.setText(deviceName);
+            tv.setBackgroundColor(Color.TRANSPARENT);
+        }
     }
 
     protected void checkUsbDevices()
@@ -142,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
             setDeviceVolume(deviceDescriptor);
             volInput.setBackgroundColor(Color.TRANSPARENT);
         } catch (IllegalArgumentException e){
-            volInput.setText("");
+            volInput.setText("00EC");
             volInput.setBackgroundColor(Color.RED);
             return;
         }
