@@ -36,4 +36,4 @@ You will temporarily lose sound during the setting of volume, however you should
 
 
 # Special thanks to:
-[ibaiGorordo](https://github.com/ibaiGorordo/libusbAndroidTest) for most of the code :>
+[ibaiGorordo](https://github.com/ibaiGorordo/libusbAndroidTest) and [guyman624](https://github.com/guyman624/usbDacVolumeAndroid) for all.
